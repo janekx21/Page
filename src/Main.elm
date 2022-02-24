@@ -48,6 +48,11 @@ view model =
         , Font.size 16
         , Background.color black
         , Font.color white
+        , Font.light
+        , Font.family
+            [ Font.external { url = "https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap", name = "Raleway" }
+            , Font.sansSerif
+            ]
         , behindContent <| html styleLink
         ]
     <|
@@ -125,4 +130,4 @@ focusColor =
 
 
 hoverColor =
-    rgb255 255 173 173
+    rgb255 255 165 109
