@@ -6,7 +6,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html, div)
+import Html exposing (Html)
 import Html.Attributes exposing (href, rel)
 
 
@@ -27,6 +27,7 @@ init =
 type Msg
     = SetUsername String
     | SetPassword String
+    | Login
 
 
 update : Msg -> Model -> Model
@@ -37,6 +38,9 @@ update msg model =
 
         SetPassword password ->
             { model | password = password }
+
+        Login ->
+            { model | username = "", password = "" }
 
 
 view : Model -> Html Msg
@@ -59,10 +63,6 @@ view model =
         box model
 
 
-styleLink =
-    Html.node "link" [ rel "stylesheet", href "/assets/style.css" ] []
-
-
 options =
     { options =
         [ focusStyle
@@ -74,9 +74,13 @@ options =
     }
 
 
+styleLink =
+    Html.node "link" [ rel "stylesheet", href "/assets/style.css" ] []
+
+
 box : Model -> Element Msg
 box model =
-    column [ centerX, centerY, Border.color white, Border.width 1, padding 32, spacing 16 ]
+    column [ centerX, centerY, Border.color white, Border.width 1, padding 32, spacing 16, onRight <| el [ moveRight 32, above <| note noteText ] none ]
         [ Input.username (inputStyle ++ [ Input.focusedOnLoad ])
             { onChange = SetUsername
             , text = model.username
@@ -90,8 +94,19 @@ box model =
             , label = Input.labelLeft [ width (px 80) ] <| text "Password"
             , show = False
             }
-        , el [ alignRight ] <| Input.button buttonStyle { onPress = Nothing, label = text "Login" }
+        , el [ alignRight ] <| Input.button buttonStyle { onPress = Just Login, label = text "Login" }
         ]
+
+
+noteText =
+    "This is not a real login.\nThis is just a mock up."
+
+
+note : String -> Element Msg
+note txt =
+    el [ moveLeft 16, moveDown 32, inFront <| image [ alignRight, width (px 16) ] { src = "/assets/corner.svg", description = "corner" }, onLeft <| image [ alignBottom, moveRight 2 ] { src = "/assets/indicator.svg", description = "indicator" } ] <|
+        column [ padding 16, Border.color white, Border.width 1, spacing 6 ]
+            (txt |> String.split "\n" |> List.map text)
 
 
 inputStyle : List (Element.Attribute msg)
@@ -100,8 +115,8 @@ inputStyle =
     , Border.color white
     , Border.width 1
     , Border.rounded 0
-    , mouseOver [ Border.color hoverColor ]
     , spacing 12
+    , mouseOver [ Border.color hoverColor ]
     ]
 
 
@@ -114,6 +129,7 @@ buttonStyle =
     , Border.color white
     , Border.width 1
     , mouseOver [ Border.color hoverColor ]
+    , mouseDown [ Background.color focusColor ]
     ]
 
 
