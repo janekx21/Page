@@ -1,46 +1,59 @@
 module Main exposing (..)
 
+import Animation
 import Browser
 import Element exposing (..)
 import Element.Background as Background
-import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
 import Html exposing (Html)
 import Html.Attributes exposing (href, rel)
+import LoginDialog
+import Util exposing (..)
 
 
 main : Program () Model Msg
 main =
-    Browser.sandbox { init = init, view = view, update = update }
+    Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.user of
+        Just user ->
+            Animation.subscription (LoginDialogMsg << LoginDialog.Animate) [ user.style ]
+
+        Nothing ->
+            Sub.none
 
 
 type alias Model =
-    { username : String, password : String }
+    { user : Maybe (LoginDialog.LoginDialog Msg)
+    }
 
 
-init : Model
-init =
-    { username = "", password = "" }
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { user = Just LoginDialog.init }
+    , Cmd.none
+    )
 
 
 type Msg
-    = SetUsername String
-    | SetPassword String
-    | Login
+    = LoginDialogMsg LoginDialog.Msg
+    | ShowInfo
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetUsername username ->
-            { model | username = username }
+        LoginDialogMsg userMsg ->
+            model.user
+                |> Maybe.map (LoginDialog.update userMsg ShowInfo)
+                |> Maybe.map (\( user, cmd ) -> ( { model | user = Just user }, cmd ))
+                |> Maybe.withDefault ( model, Cmd.none )
 
-        SetPassword password ->
-            { model | password = password }
-
-        Login ->
-            { model | username = "", password = "" }
+        ShowInfo ->
+            ( { model | user = Nothing }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -60,7 +73,12 @@ view model =
         , behindContent <| html styleLink
         ]
     <|
-        box model
+        case model.user of
+            Just user ->
+                LoginDialog.view user |> Element.map LoginDialogMsg
+
+            Nothing ->
+                infoBox
 
 
 options =
@@ -76,74 +94,3 @@ options =
 
 styleLink =
     Html.node "link" [ rel "stylesheet", href "/assets/style.css" ] []
-
-
-box : Model -> Element Msg
-box model =
-    column [ centerX, centerY, Border.color white, Border.width 1, padding 32, spacing 16, onRight <| el [ moveRight 32, above <| note noteText ] none ]
-        [ Input.username (inputStyle ++ [ Input.focusedOnLoad ])
-            { onChange = SetUsername
-            , text = model.username
-            , placeholder = Nothing
-            , label = Input.labelLeft [ width (px 80) ] <| text "Username"
-            }
-        , Input.currentPassword inputStyle
-            { onChange = SetPassword
-            , text = model.password
-            , placeholder = Nothing
-            , label = Input.labelLeft [ width (px 80) ] <| text "Password"
-            , show = False
-            }
-        , el [ alignRight ] <| Input.button buttonStyle { onPress = Just Login, label = text "Login" }
-        ]
-
-
-noteText =
-    "This is not a real login.\nThis is just a mock up."
-
-
-note : String -> Element Msg
-note txt =
-    el [ moveLeft 16, moveDown 32, inFront <| image [ alignRight, width (px 16) ] { src = "/assets/corner.svg", description = "corner" }, onLeft <| image [ alignBottom, moveRight 2 ] { src = "/assets/indicator.svg", description = "indicator" } ] <|
-        column [ padding 16, Border.color white, Border.width 1, spacing 6 ]
-            (txt |> String.split "\n" |> List.map text)
-
-
-inputStyle : List (Element.Attribute msg)
-inputStyle =
-    [ Background.color black
-    , Border.color white
-    , Border.width 1
-    , Border.rounded 0
-    , spacing 12
-    , mouseOver [ Border.color hoverColor ]
-    ]
-
-
-buttonStyle : List (Element.Attribute msg)
-buttonStyle =
-    [ width (fill |> minimum 120)
-    , padding 12
-    , Font.center
-    , Background.color black
-    , Border.color white
-    , Border.width 1
-    , mouseOver [ Border.color hoverColor ]
-    , mouseDown [ Background.color focusColor ]
-    ]
-
-
-black =
-    rgb 0 0 0
-
-
-white =
-    rgb 1 1 1
-
-
-focusColor =
-    rgb255 255 99 99
-
-
-hoverColor =
-    rgb255 255 165 109
