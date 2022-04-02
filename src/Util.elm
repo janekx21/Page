@@ -32,7 +32,7 @@ hoverColor =
 
 note : String -> Element msg
 note txt =
-    el [ moveLeft 16, moveDown 32, inFront <| image [ alignRight, width (px 16) ] { src = "/assets/corner.svg", description = "corner" }, onLeft <| image [ alignBottom, moveRight 2 ] { src = "/assets/indicator.svg", description = "indicator" } ] <|
+    el [ moveLeft 16, moveDown 32, inFront <| image [ alignRight, width (px 16) ] { src = "assets/corner.svg", description = "corner" }, onLeft <| image [ alignBottom, moveRight 2 ] { src = "assets/indicator.svg", description = "indicator" } ] <|
         column [ padding 16, Border.color white, Border.width 1, spacing 6 ]
             (txt |> String.split "\n" |> List.map text)
 
